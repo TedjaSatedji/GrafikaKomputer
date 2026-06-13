@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GrafKom 2D — Interactive Editor | Kelompok 1</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: ['selector', '[data-theme="dark"]'],
+      theme: {
+        extend: {
+          colors: {
+            surface:  { DEFAULT: '#ffffff', 2: '#e8e8e8', 3: '#d8d8d8' },
+            'surface-dark':  { DEFAULT: '#383838', 2: '#444444', 3: '#555555' },
+            borderc:  { DEFAULT: '#c0c0c0', 2: '#a0a0a0' },
+            'borderc-dark':  { DEFAULT: '#606060', 2: '#777777' },
+            txt:      { DEFAULT: '#1a1a1a', 2: '#444444', 3: '#777777' },
+            'txt-dark':      { DEFAULT: '#e0e0e0', 2: '#b0b0b0', 3: '#888888' },
+            accent:   { DEFAULT: '#0078d4', dim: '#cce4f7', bg: '#e5f1fb' },
+            'accent-dark':   { DEFAULT: '#4ca6e8', dim: '#1a3a50', bg: '#1a2a38' },
+            green:    { DEFAULT: '#107c10', dim: '#dff0d8' },
+            'green-dark':    { DEFAULT: '#4caf50', dim: '#1a2e1a' },
+            red:      { DEFAULT: '#d13438', dim: '#fde7e7' },
+            'red-dark':      { DEFAULT: '#ef5350', dim: '#3a1a1a' },
+            amber:    { DEFAULT: '#c07000', dim: '#fff4ce' },
+            'amber-dark':    { DEFAULT: '#ffb74d', dim: '#3a2a10' },
+            canvasbg: '#808080',
+            'canvasbg-dark': '#505050',
+          },
+          fontFamily: {
+            ui:   ['Segoe UI', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['Consolas', 'Courier New', 'monospace'],
+          },
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="h-full overflow-hidden bg-[#f0f0f0] dark:bg-[#2d2d2d] text-[#1a1a1a] dark:text-[#e0e0e0] font-ui text-xs">
+
+<div class="flex flex-col h-screen overflow-hidden">
+
+  <!-- ═══ MENUBAR ═══ -->
+  <header class="h-8 bg-white dark:bg-[#383838] border-b border-borderc dark:border-borderc-dark flex items-center px-2 gap-2 shrink-0 z-50">
+
+    <div class="flex items-center gap-1.5 pr-2 border-r border-borderc dark:border-borderc-dark shrink-0">
+      <div class="w-5 h-5 bg-accent dark:bg-accent-dark text-white font-UI text-[9px] font-bold rounded-sm flex items-center justify-center shrink-0">GK</div>
+      <span class="text-xs font-semibold text-txt dark:text-txt-dark whitespace-nowrap">GrafKom 2D</span>
+    </div>
+
+    <div class="flex items-center gap-1 shrink-0">
+      <div class="flex items-center gap-1 text-[11px] font-mono text-txt-3 dark:text-txt-dark-3 bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark rounded-sm px-1.5 py-0.5 whitespace-nowrap">
+        <span id="obj-count">Objek: 0</span>
+      </div>
+      <div class="flex items-center gap-1 text-[11px] font-mono text-accent dark:text-accent-dark bg-accent-bg dark:bg-accent-dark-bg border border-accent-dim dark:border-accent-dark-dim rounded-sm px-1.5 py-0.5 whitespace-nowrap font-semibold" id="tool-mode">Titik</div>
+    </div>
+
+    <div class="flex-1 flex justify-center min-w-0">
+      <div class="font-mono text-[11px] text-txt-2 dark:text-txt-dark-2 bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark rounded-sm px-2 py-0.5 min-w-[80px] text-center" id="coord-display">—, —</div>
+    </div>
+
+    <div class="flex items-center gap-1.5 shrink-0">
+      <button class="flex items-center gap-1 bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark text-txt-2 dark:text-txt-dark-2 px-2 py-0.5 rounded-sm cursor-pointer text-[11px] whitespace-nowrap hover:bg-surface-3 dark:hover:bg-surface-dark-3 hover:text-txt dark:hover:text-txt-dark" id="info-trigger-btn">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" class="w-3 h-3 shrink-0"><circle cx="8" cy="8" r="6"/><path d="M8 7v5M8 5v.5" stroke-linecap="round"/></svg>
+        Tentang
+      </button>
+      <button class="w-6 h-6 bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark rounded-sm text-txt-2 dark:text-txt-dark-2 cursor-pointer flex items-center justify-center text-[13px] shrink-0 hover:bg-surface-3 dark:hover:bg-surface-dark-3" id="theme-btn" title="Toggle Tema">🌙</button>
+    </div>
+
+  </header>
+
+  <!-- ═══ TOOLBAR (Ribbon) ═══ -->
+  <div class="min-h-[44px] bg-white dark:bg-[#383838] border-b border-borderc dark:border-borderc-dark flex items-stretch shrink-0 overflow-x-auto overflow-y-hidden custom-scroll">
+
+    <!-- PRIMITIF -->
+    <div class="relative flex flex-col py-[3px] px-1.5 pb-4 border-r border-borderc dark:border-borderc-dark shrink-0 min-w-max last:border-r-0">
+      <div class="flex items-center gap-0.5 h-full flex-1 py-0.5">
+        <button class="tool-btn active" data-tool="point">
+          <span class="text-sm leading-none">·</span><span>Titik</span>
+        </button>
+        <button class="flex flex-col items-center justify-center gap-0.5 bg-transparent border border-transparent text-txt-2 dark:text-txt-dark-2 p-[3px] px-1.5 rounded-sm text-[10px] font-ui cursor-pointer whitespace-nowrap min-w-[40px] h-[34px] shrink-0 hover:bg-surface-2 dark:hover:bg-surface-dark-2 hover:text-txt dark:hover:text-txt-dark hover:border-borderc dark:hover:border-borderc-dark tool-btn" data-tool="line">
+          <span class="text-sm leading-none">╱</span><span>DDA</span>
+        </button>
+        <button class="flex flex-col items-center justify-center gap-0.5 bg-transparent border border-transparent text-txt-2 dark:text-txt-dark-2 p-[3px] px-1.5 rounded-sm text-[10px] font-ui cursor-pointer whitespace-nowrap min-w-[40px] h-[34px] shrink-0 hover:bg-surface-2 dark:hover:bg-surface-dark-2 hover:text-txt dark:hover:text-txt-dark hover:border-borderc dark:hover:border-borderc-dark tool-btn" data-tool="bresenham">
+          <span class="text-sm leading-none">╱</span><span>Bresnh.</span>
+        </button>
+        <button class="flex flex-col items-center justify-center gap-0.5 bg-transparent border border-transparent text-txt-2 dark:text-txt-dark-2 p-[3px] px-1.5 rounded-sm text-[10px] font-ui cursor-pointer whitespace-nowrap min-w-[40px] h-[34px] shrink-0 hover:bg-surface-2 dark:hover:bg-surface-dark-2 hover:text-txt dark:hover:text-txt-dark hover:border-borderc dark:hover:border-borderc-dark tool-btn" data-tool="circle">
+          <span class="text-sm leading-none">○</span><span>Lingkaran</span>
+        </button>
+        <button class="flex flex-col items-center justify-center gap-0.5 bg-transparent border border-transparent text-txt-2 dark:text-txt-dark-2 p-[3px] px-1.5 rounded-sm text-[10px] font-ui cursor-pointer whitespace-nowrap min-w-[40px] h-[34px] shrink-0 hover:bg-surface-2 dark:hover:bg-surface-dark-2 hover:text-txt dark:hover:text-txt-dark hover:border-borderc dark:hover:border-borderc-dark tool-btn" data-tool="ellipse">
+          <span class="text-sm leading-none">◯</span><span>Elips</span>
+        </button>
+        <button class="flex flex-col items-center justify-center gap-0.5 bg-transparent border border-transparent text-txt-2 dark:text-txt-dark-2 p-[3px] px-1.5 rounded-sm text-[10px] font-ui cursor-pointer whitespace-nowrap min-w-[40px] h-[34px] shrink-0 hover:bg-surface-2 dark:hover:bg-surface-dark-2 hover:text-txt dark:hover:text-txt-dark hover:border-borderc dark:hover:border-borderc-dark tool-btn" data-tool="rect">
+          <span class="text-sm leading-none">□</span><span>Persegi</span>
+        </button>
+        <button class="flex flex-col items-center justify-center gap-0.5 bg-transparent border border-transparent text-txt-2 dark:text-txt-dark-2 p-[3px] px-1.5 rounded-sm text-[10px] font-ui cursor-pointer whitespace-nowrap min-w-[40px] h-[34px] shrink-0 hover:bg-surface-2 dark:hover:bg-surface-dark-2 hover:text-txt dark:hover:text-txt-dark hover:border-borderc dark:hover:border-borderc-dark tool-btn" data-tool="polygon">
+          <span class="text-sm leading-none">⬡</span><span>Poligon</span>
+        </button>
+      </div>
+      <div class="absolute bottom-0.5 left-0 right-0 text-center text-[9px] text-txt-3 dark:text-txt-dark-3 select-none">Primitif</div>
+    </div>
+
+    <!-- FILL & SELECT -->
+    <div class="relative flex flex-col py-[3px] px-1.5 pb-4 border-r border-borderc dark:border-borderc-dark shrink-0 min-w-max">
+      <div class="flex items-center gap-0.5 h-full flex-1 py-0.5">
+        <button class="flex flex-col items-center justify-center gap-0.5 bg-transparent border border-transparent text-txt-2 dark:text-txt-dark-2 p-[3px] px-1.5 rounded-sm text-[10px] font-ui cursor-pointer whitespace-nowrap min-w-[40px] h-[34px] shrink-0 hover:bg-surface-2 dark:hover:bg-surface-dark-2 hover:text-txt dark:hover:text-txt-dark hover:border-borderc dark:hover:border-borderc-dark tool-btn" data-tool="fill">
+          <span class="text-sm leading-none">▣</span><span>Flood Fill</span>
+        </button>
+        <button class="flex flex-col items-center justify-center gap-0.5 bg-transparent border border-transparent text-txt-2 dark:text-txt-dark-2 p-[3px] px-1.5 rounded-sm text-[10px] font-ui cursor-pointer whitespace-nowrap min-w-[40px] h-[34px] shrink-0 hover:bg-surface-2 dark:hover:bg-surface-dark-2 hover:text-txt dark:hover:text-txt-dark hover:border-borderc dark:hover:border-borderc-dark tool-btn" data-tool="scanline">
+          <span class="text-sm leading-none">≡</span><span>Scan-Line</span>
+        </button>
+        <button class="flex flex-col items-center justify-center gap-0.5 bg-transparent border border-transparent text-txt-2 dark:text-txt-dark-2 p-[3px] px-1.5 rounded-sm text-[10px] font-ui cursor-pointer whitespace-nowrap min-w-[40px] h-[34px] shrink-0 hover:bg-surface-2 dark:hover:bg-surface-dark-2 hover:text-txt dark:hover:text-txt-dark hover:border-borderc dark:hover:border-borderc-dark tool-btn" data-tool="select">
+          <span class="text-sm leading-none">↖</span><span>Cursor</span>
+        </button>
+      </div>
+      <div class="absolute bottom-0.5 left-0 right-0 text-center text-[9px] text-txt-3 dark:text-txt-dark-3 select-none">Fill & Cursor</div>
+    </div>
+
+    <!-- GAMBAR BEBAS -->
+    <div class="relative flex flex-col py-[3px] px-1.5 pb-4 border-r border-borderc dark:border-borderc-dark shrink-0 min-w-max">
+      <div class="flex items-center gap-0.5 h-full flex-1 py-0.5">
+        <button class="flex flex-col items-center justify-center gap-0.5 bg-transparent border border-transparent text-txt-2 dark:text-txt-dark-2 p-[3px] px-1.5 rounded-sm text-[10px] font-ui cursor-pointer whitespace-nowrap min-w-[40px] h-[34px] shrink-0 hover:bg-surface-2 dark:hover:bg-surface-dark-2 hover:text-txt dark:hover:text-txt-dark hover:border-borderc dark:hover:border-borderc-dark tool-btn" data-tool="pencil">
+          <span class="text-sm leading-none">✏</span><span>Pensil</span>
+        </button>
+        <button class="flex flex-col items-center justify-center gap-0.5 bg-transparent border border-transparent text-txt-2 dark:text-txt-dark-2 p-[3px] px-1.5 rounded-sm text-[10px] font-ui cursor-pointer whitespace-nowrap min-w-[40px] h-[34px] shrink-0 hover:bg-surface-2 dark:hover:bg-surface-dark-2 hover:text-txt dark:hover:text-txt-dark hover:border-borderc dark:hover:border-borderc-dark tool-btn" data-tool="eraser">
+          <span class="text-sm leading-none">⬜</span><span>Penghapus</span>
+        </button>
+      </div>
+      <div class="absolute bottom-0.5 left-0 right-0 text-center text-[9px] text-txt-3 dark:text-txt-dark-3 select-none">Gambar Bebas</div>
+    </div>
+
+    <!-- WARNA & KETEBALAN -->
+    <div class="relative flex flex-col py-[3px] px-1.5 pb-4 border-r border-borderc dark:border-borderc-dark shrink-0 min-w-max">
+      <div class="flex flex-col gap-[3px] p-0.5 px-1 justify-center">
+        <div class="flex gap-1.5 items-center">
+          <div class="flex flex-col items-center gap-0.5">
+            <label class="text-[9px] text-txt-3 dark:text-txt-dark-3">Stroke</label>
+            <input type="color" id="stroke-color" value="#5b9bff" class="w-6 h-[18px] rounded-sm cursor-pointer" />
+          </div>
+          <div class="flex flex-col items-center gap-0.5">
+            <label class="text-[9px] text-txt-3 dark:text-txt-dark-3">Fill</label>
+            <input type="color" id="fill-color" value="#1a4faa" class="w-6 h-[18px] rounded-sm cursor-pointer" />
+          </div>
+        </div>
+        <div class="flex flex-col justify-center gap-0.5 p-0.5 px-1">
+          <label class="text-[9px] text-txt-3 dark:text-txt-dark-3">Tebal</label>
+          <div class="flex items-center gap-1">
+            <input type="range" id="pixel-size" min="1" max="8" value="1" class="w-[50px]" />
+            <span class="text-[10px] font-mono text-txt-2 dark:text-txt-dark-2 min-w-[12px] text-right" id="pixel-size-val">1</span>
+          </div>
+        </div>
+      </div>
+      <div class="absolute bottom-0.5 left-0 right-0 text-center text-[9px] text-txt-3 dark:text-txt-dark-3 select-none">Warna & Atribut</div>
+    </div>
+
+    <!-- ERASER SIZE -->
+    <div class="relative flex flex-col py-[3px] px-1.5 pb-4 border-r border-borderc dark:border-borderc-dark shrink-0 min-w-max hidden" id="eraser-group">
+      <div class="flex flex-col justify-center gap-0.5 p-0.5 px-1">
+        <label class="text-[9px] text-txt-3 dark:text-txt-dark-3">Ukuran Penghapus</label>
+        <div class="flex items-center gap-1">
+          <input type="range" id="eraser-size" min="3" max="40" value="12" class="w-16" />
+          <span class="text-[10px] font-mono text-txt-2 dark:text-txt-dark-2 min-w-[12px] text-right" id="eraser-size-val">12</span>
+        </div>
+      </div>
+      <div class="absolute bottom-0.5 left-0 right-0 text-center text-[9px] text-txt-3 dark:text-txt-dark-3 select-none">Penghapus</div>
+    </div>
+
+    <!-- TIPE GARIS -->
+    <div class="relative flex flex-col py-[3px] px-1.5 pb-4 border-r border-borderc dark:border-borderc-dark shrink-0 min-w-max">
+      <div class="flex flex-col justify-center gap-0.5 p-0.5 px-1">
+        <label class="text-[9px] text-txt-3 dark:text-txt-dark-3">Tipe Garis</label>
+        <select class="bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark text-txt dark:text-txt-dark rounded-sm px-1 py-0.5 text-[11px] font-ui cursor-pointer outline-none w-20 sel-input" id="line-type">
+          <option value="solid">─ Solid</option>
+          <option value="dashed">- - Dashed</option>
+          <option value="dotted">· · · Dotted</option>
+          <option value="dashdot">-·- Dash-Dot</option>
+        </select>
+      </div>
+      <div class="absolute bottom-0.5 left-0 right-0 text-center text-[9px] text-txt-3 dark:text-txt-dark-3 select-none">Tipe Garis</div>
+    </div>
+
+    <!-- TAMPILAN TOGGLES -->
+    <div class="relative flex flex-col py-[3px] px-1.5 pb-4 border-r border-borderc dark:border-borderc-dark shrink-0 min-w-max">
+      <div class="flex flex-col gap-0.5 p-[3px] px-0.5 justify-center">
+        <label class="toggle-item flex items-center gap-1.5 text-[10px] text-txt-2 dark:text-txt-dark-2 cursor-pointer whitespace-nowrap select-none">
+          <input type="checkbox" id="show-grid" checked class="hidden" />
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
+          <span>Grid</span>
+        </label>
+        <label class="toggle-item flex items-center gap-1.5 text-[10px] text-txt-2 dark:text-txt-dark-2 cursor-pointer whitespace-nowrap select-none">
+          <input type="checkbox" id="show-coord" checked class="hidden" />
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
+          <span>Koordinat</span>
+        </label>
+        <label class="toggle-item flex items-center gap-1.5 text-[10px] text-txt-2 dark:text-txt-dark-2 cursor-pointer whitespace-nowrap select-none">
+          <input type="checkbox" id="show-axes" checked class="hidden" />
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
+          <span>Sumbu</span>
+        </label>
+      </div>
+      <div class="absolute bottom-0.5 left-0 right-0 text-center text-[9px] text-txt-3 dark:text-txt-dark-3 select-none">Tampilan</div>
+    </div>
+
+    <!-- AKSI -->
+    <div class="relative flex flex-col py-[3px] px-1.5 pb-4 border-r border-borderc dark:border-borderc-dark shrink-0 min-w-max">
+      <div class="flex flex-wrap gap-0.5 p-[3px] px-1 w-[110px] content-center">
+        <button class="flex items-center gap-1 bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark text-txt-2 dark:text-txt-dark-2 px-1.5 py-0.5 rounded-sm text-[10px] font-ui cursor-pointer whitespace-nowrap hover:bg-surface-3 dark:hover:bg-surface-dark-3 hover:text-txt dark:hover:text-txt-dark act-btn" id="undo-btn">↩ Undo</button>
+        <button class="flex items-center gap-1 bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark text-txt-2 dark:text-txt-dark-2 px-1.5 py-0.5 rounded-sm text-[10px] font-ui cursor-pointer whitespace-nowrap hover:bg-surface-3 dark:hover:bg-surface-dark-3 hover:text-txt dark:hover:text-txt-dark act-btn" id="redo-btn">↪ Redo</button>
+        <button class="flex items-center gap-1 bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark text-accent dark:text-accent-dark px-1.5 py-0.5 rounded-sm text-[10px] font-ui cursor-pointer whitespace-nowrap hover:bg-accent-bg dark:hover:bg-accent-dark-bg act-btn" id="save-png">⤓ PNG</button>
+        <button class="flex items-center gap-1 bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark text-red dark:text-red-dark px-1.5 py-0.5 rounded-sm text-[10px] font-ui cursor-pointer whitespace-nowrap hover:bg-red-dim dark:hover:bg-red-dark-dim act-btn" id="clear-canvas">⊗ Bersihkan</button>
+      </div>
+      <div class="absolute bottom-0.5 left-0 right-0 text-center text-[9px] text-txt-3 dark:text-txt-dark-3 select-none">Aksi</div>
+    </div>
+
+    <!-- POLYGON CONTROLS -->
+    <div class="relative flex flex-col py-[3px] px-1.5 pb-4 border-r border-borderc dark:border-borderc-dark shrink-0 min-w-max hidden" id="polygon-ctrl">
+      <div class="flex flex-col gap-1 p-1 justify-center">
+        <div class="flex items-center gap-1 text-[10px] text-txt-2 dark:text-txt-dark-2">
+          <label class="text-[10px] text-txt-3 dark:text-txt-dark-3 shrink-0">Sisi</label>
+          <input type="number" id="poly-edges" class="w-10 bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark text-txt dark:text-txt-dark rounded-sm px-1 py-0.5 font-mono text-[11px] text-center outline-none focus:border-accent dark:focus:border-accent-dark" min="3" max="20" value="3" />
+        </div>
+        <button class="flex items-center justify-center gap-1 bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark text-txt-2 dark:text-txt-dark-2 px-1.5 py-1 rounded-sm text-[10px] font-ui cursor-pointer whitespace-nowrap hover:bg-surface-3 dark:hover:bg-surface-dark-3 hover:text-txt dark:hover:text-txt-dark" id="cancel-polygon">✕ Batal</button>
+      </div>
+      <div class="absolute bottom-0.5 left-0 right-0 text-center text-[9px] text-txt-3 dark:text-txt-dark-3 select-none">Poligon</div>
+    </div>
+
+  </div>
+
+  <!-- ═══ MAIN BODY ═══ -->
+  <div class="flex-1 flex overflow-hidden">
+
+    <!-- ─── LEFT PANEL ─── -->
+    <aside class="w-[210px] bg-white dark:bg-[#383838] border-r border-borderc dark:border-borderc-dark flex flex-col overflow-y-auto overflow-x-hidden shrink-0 custom-scroll">
+
+      <div class="flex border-b border-borderc dark:border-borderc-dark shrink-0">
+        <button class="flex-1 bg-transparent border-none border-b-2 border-transparent text-txt-3 dark:text-txt-dark-3 text-[11px] font-ui py-1.5 cursor-pointer text-center hover:text-txt-2 dark:hover:text-txt-dark-2 ptab active" data-tab="transform">Transformasi</button>
+        <button class="flex-1 bg-transparent border-none border-b-2 border-transparent text-txt-3 dark:text-txt-dark-3 text-[11px] font-ui py-1.5 cursor-pointer text-center hover:text-txt-2 dark:hover:text-txt-dark-2 ptab" data-tab="anim">Animasi</button>
+        <button class="flex-1 bg-transparent border-none border-b-2 border-transparent text-txt-3 dark:text-txt-dark-3 text-[11px] font-ui py-1.5 cursor-pointer text-center hover:text-txt-2 dark:hover:text-txt-dark-2 ptab" data-tab="info">Info</button>
+      </div>
+
+      <!-- TAB: TRANSFORMASI -->
+      <div class="tab-content active" id="tab-transform">
+
+        <div class="p-2 px-2.5 border-b border-borderc dark:border-borderc-dark shrink-0">
+          <div class="text-[10px] font-semibold text-txt-2 dark:text-txt-dark-2 mb-1.5">Objek Terpilih</div>
+          <div class="flex items-center gap-1 mb-1.5">
+            <button class="w-5 h-5 bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark text-txt-2 dark:text-txt-dark-2 rounded-sm cursor-pointer text-xs flex items-center justify-center shrink-0 hover:bg-surface-3 dark:hover:bg-surface-dark-3 hover:text-txt dark:hover:text-txt-dark" id="select-prev">‹</button>
+            <span class="flex-1 text-[10px] font-mono text-txt-2 dark:text-txt-dark-2 overflow-hidden text-overflow-ellipsis whitespace-nowrap text-center bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark rounded-sm px-1 py-0.5" id="selected-label">Tidak ada</span>
+            <button class="w-5 h-5 bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark text-txt-2 dark:text-txt-dark-2 rounded-sm cursor-pointer text-xs flex items-center justify-center shrink-0 hover:bg-surface-3 dark:hover:bg-surface-dark-3 hover:text-txt dark:hover:text-txt-dark" id="select-next">›</button>
+          </div>
+          <div class="flex gap-[3px]">
+            <button class="flex-1 bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark text-txt-2 dark:text-txt-dark-2 px-1.5 py-[3px] rounded-sm text-[10px] font-ui cursor-pointer text-center whitespace-nowrap hover:bg-surface-3 dark:hover:bg-surface-dark-3 hover:text-txt dark:hover:text-txt-dark ctrl-btn" id="reset-transform">↺ Reset</button>
+            <button class="flex-1 bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark text-red dark:text-red-dark px-1.5 py-[3px] rounded-sm text-[10px] font-ui cursor-pointer text-center whitespace-nowrap hover:bg-red-dim dark:hover:bg-red-dark-dim ctrl-btn" id="delete-selected">✕ Hapus</button>
+          </div>
+        </div>
+
+        <div class="p-2 px-2.5 border-b border-borderc dark:border-borderc-dark shrink-0">
+          <div class="text-[10px] font-semibold text-txt-2 dark:text-txt-dark-2 mb-1.5">Translasi & Rotasi</div>
+          <div class="flex items-center gap-1 mb-[3px]">
+            <label class="w-[50px] shrink-0 text-[10px] text-txt-2 dark:text-txt-dark-2">Trans X</label>
+            <input type="range" id="tx" min="-600" max="600" value="0" class="flex-1" />
+            <span class="w-[35px] text-right text-[10px] font-mono text-txt-2 dark:text-txt-dark-2 shrink-0" id="tx-val">0</span>
+          </div>
+          <div class="flex items-center gap-1 mb-[3px]">
+            <label class="w-[50px] shrink-0 text-[10px] text-txt-2 dark:text-txt-dark-2">Trans Y</label>
+            <input type="range" id="ty" min="-600" max="600" value="0" class="flex-1" />
+            <span class="w-[35px] text-right text-[10px] font-mono text-txt-2 dark:text-txt-dark-2 shrink-0" id="ty-val">0</span>
+          </div>
+          <div class="flex items-center gap-1 mb-[3px]">
+            <label class="w-[50px] shrink-0 text-[10px] text-txt-2 dark:text-txt-dark-2">Rotasi</label>
+            <input type="range" id="rot" min="-180" max="180" value="0" class="flex-1" />
+            <span class="w-[35px] text-right text-[10px] font-mono text-txt-2 dark:text-txt-dark-2 shrink-0" id="rot-val">0°</span>
+          </div>
+          <div class="flex items-center gap-1 mb-[3px]">
+            <label class="w-[50px] shrink-0 text-[10px] text-txt-2 dark:text-txt-dark-2">Skala</label>
+            <input type="range" id="scale" min="10" max="400" value="100" class="flex-1" />
+            <span class="w-[35px] text-right text-[10px] font-mono text-txt-2 dark:text-txt-dark-2 shrink-0" id="scale-val">1.00×</span>
+          </div>
+          <div class="flex items-center gap-1 mb-[3px]">
+            <label class="w-[50px] shrink-0 text-[10px] text-txt-2 dark:text-txt-dark-2">Shear X</label>
+            <input type="range" id="shx" min="-200" max="200" value="0" class="flex-1" />
+            <span class="w-[35px] text-right text-[10px] font-mono text-txt-2 dark:text-txt-dark-2 shrink-0" id="shx-val">0</span>
+          </div>
+          <div class="flex items-center gap-1 mb-[3px]">
+            <label class="w-[50px] shrink-0 text-[10px] text-txt-2 dark:text-txt-dark-2">Shear Y</label>
+            <input type="range" id="shy" min="-200" max="200" value="0" class="flex-1" />
+            <span class="w-[35px] text-right text-[10px] font-mono text-txt-2 dark:text-txt-dark-2 shrink-0" id="shy-val">0</span>
+          </div>
+          <div class="grid grid-cols-3 gap-[3px] mt-1 mb-0.5">
+            <div class="flex flex-col gap-px">
+              <label class="text-[9px] text-txt-3 dark:text-txt-dark-3">Tx</label>
+              <input type="number" class="mini-inp bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark text-txt dark:text-txt-dark rounded-sm px-[3px] py-0.5 font-mono text-[10px] w-full outline-none focus:border-accent dark:focus:border-accent-dark" id="tx-num" value="0" />
+            </div>
+            <div class="flex flex-col gap-px">
+              <label class="text-[9px] text-txt-3 dark:text-txt-dark-3">Ty</label>
+              <input type="number" class="mini-inp bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark text-txt dark:text-txt-dark rounded-sm px-[3px] py-0.5 font-mono text-[10px] w-full outline-none focus:border-accent dark:focus:border-accent-dark" id="ty-num" value="0" />
+            </div>
+            <div class="flex flex-col gap-px">
+              <label class="text-[9px] text-txt-3 dark:text-txt-dark-3">Rot°</label>
+              <input type="number" class="mini-inp bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark text-txt dark:text-txt-dark rounded-sm px-[3px] py-0.5 font-mono text-[10px] w-full outline-none focus:border-accent dark:focus:border-accent-dark" id="rot-num" value="0" />
+            </div>
+          </div>
+        </div>
+
+        <div class="p-2 px-2.5 border-b border-borderc dark:border-borderc-dark shrink-0">
+          <div class="text-[10px] font-semibold text-txt-2 dark:text-txt-dark-2 mb-1.5">Refleksi</div>
+          <div class="grid grid-cols-2 gap-0.5">
+            <button class="bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark text-txt-2 dark:text-txt-dark-2 p-[3px] rounded-sm text-[10px] cursor-pointer text-center hover:bg-surface-3 dark:hover:bg-surface-dark-3 hover:text-accent dark:hover:text-accent-dark refl-btn" id="reflect-x">Sumbu X</button>
+            <button class="bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark text-txt-2 dark:text-txt-dark-2 p-[3px] rounded-sm text-[10px] cursor-pointer text-center hover:bg-surface-3 dark:hover:bg-surface-dark-3 hover:text-accent dark:hover:text-accent-dark refl-btn" id="reflect-y">Sumbu Y</button>
+            <button class="bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark text-txt-2 dark:text-txt-dark-2 p-[3px] rounded-sm text-[10px] cursor-pointer text-center hover:bg-surface-3 dark:hover:bg-surface-dark-3 hover:text-accent dark:hover:text-accent-dark refl-btn" id="reflect-origin">Origin</button>
+            <button class="bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark text-txt-2 dark:text-txt-dark-2 p-[3px] rounded-sm text-[10px] cursor-pointer text-center hover:bg-surface-3 dark:hover:bg-surface-dark-3 hover:text-accent dark:hover:text-accent-dark refl-btn" id="reflect-yx">y = x</button>
+          </div>
+        </div>
+
+        <div class="p-2 px-2.5 border-b border-borderc dark:border-borderc-dark shrink-0">
+          <div class="mt-1 bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark rounded-sm p-1.5" id="matrix-display">
+            <div class="text-[9px] font-mono text-txt-3 dark:text-txt-dark-3 mb-1">Matriks T · R · S · Sh</div>
+            <table class="border-collapse w-full m-table" id="matrix-table">
+              <tr><td class="w-1/3 text-center font-mono text-[10px] text-accent dark:text-accent-dark p-0.5 border border-borderc dark:border-borderc-dark">1</td><td class="w-1/3 text-center font-mono text-[10px] text-accent dark:text-accent-dark p-0.5 border border-borderc dark:border-borderc-dark">0</td><td class="w-1/3 text-center font-mono text-[10px] text-accent dark:text-accent-dark p-0.5 border border-borderc dark:border-borderc-dark">0</td></tr>
+              <tr><td class="text-center font-mono text-[10px] text-accent dark:text-accent-dark p-0.5 border border-borderc dark:border-borderc-dark">0</td><td class="text-center font-mono text-[10px] text-accent dark:text-accent-dark p-0.5 border border-borderc dark:border-borderc-dark">1</td><td class="text-center font-mono text-[10px] text-accent dark:text-accent-dark p-0.5 border border-borderc dark:border-borderc-dark">0</td></tr>
+              <tr><td class="text-center font-mono text-[10px] text-accent dark:text-accent-dark p-0.5 border border-borderc dark:border-borderc-dark">0</td><td class="text-center font-mono text-[10px] text-accent dark:text-accent-dark p-0.5 border border-borderc dark:border-borderc-dark">0</td><td class="text-center font-mono text-[10px] text-accent dark:text-accent-dark p-0.5 border border-borderc dark:border-borderc-dark">1</td></tr>
+            </table>
+          </div>
+        </div>
+
+        <div class="p-2 px-2.5 border-b border-borderc dark:border-borderc-dark shrink-0 hidden" id="shape-info-panel">
+          <div class="text-[10px] font-semibold text-txt-2 dark:text-txt-dark-2 mb-1.5">Info Bangunan</div>
+          <div class="grid grid-cols-2 gap-[3px] shape-info-grid" id="shape-info-grid"></div>
+        </div>
+
+      </div>
+
+      <!-- TAB: ANIMASI -->
+      <div class="tab-content hidden" id="tab-anim">
+        <div class="p-2 px-2.5 border-b border-borderc dark:border-borderc-dark shrink-0">
+          <div class="text-[10px] font-semibold text-txt-2 dark:text-txt-dark-2 mb-1.5">Animasi Bounce</div>
+          <div class="flex gap-[3px]">
+            <button class="flex-1 bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark text-green dark:text-green-dark px-1.5 py-[3px] rounded-sm text-[10px] font-ui cursor-pointer text-center whitespace-nowrap hover:bg-green-dim dark:hover:bg-green-dark-dim ctrl-btn" id="toggle-anim">▶ Start</button>
+            <button class="flex-1 bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark text-txt-2 dark:text-txt-dark-2 px-1.5 py-[3px] rounded-sm text-[10px] font-ui cursor-pointer text-center whitespace-nowrap hover:bg-surface-3 dark:hover:bg-surface-dark-3 ctrl-btn" id="reset-anim">⊙ Reset</button>
+          </div>
+          <div class="flex items-center gap-1.5 mt-1">
+            <label class="text-[10px] text-txt-2 dark:text-txt-dark-2 shrink-0">Kecepatan</label>
+            <input type="range" id="speed" min="1" max="20" value="5" class="flex-1" />
+            <span class="text-[10px] font-mono text-txt-2 dark:text-txt-dark-2 min-w-[12px] text-right" id="speed-val">5</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: INFO -->
+      <div class="tab-content hidden" id="tab-info">
+        <div class="p-2 px-2.5 border-b border-borderc dark:border-borderc-dark shrink-0">
+          <div class="text-[10px] font-semibold text-txt-2 dark:text-txt-dark-2 mb-1.5">Kelompok 1</div>
+          <div class="flex flex-col gap-0.5">
+            <div class="text-[10px] text-txt-2 dark:text-txt-dark-2 px-1.5 py-[3px] bg-surface-2 dark:bg-surface-dark-2 rounded-sm">Anak Agung Ngurah Sadewa Tedja JayaNegara</div>
+            <div class="text-[10px] text-txt-2 dark:text-txt-dark-2 px-1.5 py-[3px] bg-surface-2 dark:bg-surface-dark-2 rounded-sm">Ardhika Rizki Akbar Pratama</div>
+            <div class="text-[10px] text-txt-2 dark:text-txt-dark-2 px-1.5 py-[3px] bg-surface-2 dark:bg-surface-dark-2 rounded-sm">Prayatna Ardi Wibisono</div>
+          </div>
+        </div>
+        <div class="p-2 px-2.5 border-b border-borderc dark:border-borderc-dark shrink-0">
+          <div class="text-[10px] font-semibold text-txt-2 dark:text-txt-dark-2 mb-1.5">Algoritma Aktif</div>
+          <div class="text-[10px] font-mono text-txt-2 dark:text-txt-dark-2 bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark rounded-sm px-1.5 py-0.5 w-full" id="algo-label">—</div>
+        </div>
+        <div class="p-2 px-2.5 border-b border-borderc dark:border-borderc-dark shrink-0">
+          <div class="text-[10px] font-semibold text-txt-2 dark:text-txt-dark-2 mb-1.5">Cakupan Materi</div>
+          <div class="flex flex-col gap-1 text-[10.5px] text-txt-2 dark:text-txt-dark-2 leading-snug">
+            <div>01–02: canvas raster, koordinat, input mouse, output layar</div>
+            <div>03–04: titik, DDA, Bresenham, midpoint circle, midpoint ellipse</div>
+            <div>05–06: flood fill, scan-line fill, warna, ketebalan, tipe garis</div>
+            <div>07–09: translasi, rotasi, skala, matriks homogen, shear, refleksi</div>
+          </div>
+        </div>
+        <div class="p-2 px-2.5 border-b border-borderc dark:border-borderc-dark shrink-0">
+          <div class="text-[10px] font-semibold text-txt-2 dark:text-txt-dark-2 mb-1.5">Keyboard Shortcut</div>
+          <div class="flex flex-col gap-1 text-[10.5px] text-txt-2 dark:text-txt-dark-2">
+            <div class="flex justify-between"><span>Undo</span><span class="kbd inline-block bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark rounded-sm px-1 py-px font-mono text-[10px] text-txt dark:text-txt-dark">Ctrl+Z</span></div>
+            <div class="flex justify-between"><span>Redo</span><span class="kbd inline-block bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark rounded-sm px-1 py-px font-mono text-[10px] text-txt dark:text-txt-dark">Ctrl+Y</span></div>
+            <div class="flex justify-between"><span>Hapus Objek</span><span class="kbd inline-block bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark rounded-sm px-1 py-px font-mono text-[10px] text-txt dark:text-txt-dark">Del</span></div>
+            <div class="flex justify-between"><span>Pensil</span><span class="kbd inline-block bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark rounded-sm px-1 py-px font-mono text-[10px] text-txt dark:text-txt-dark">P</span></div>
+            <div class="flex justify-between"><span>Penghapus</span><span class="kbd inline-block bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark rounded-sm px-1 py-px font-mono text-[10px] text-txt dark:text-txt-dark">E</span></div>
+            <div class="flex justify-between"><span>Cursor</span><span class="kbd inline-block bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark rounded-sm px-1 py-px font-mono text-[10px] text-txt dark:text-txt-dark">V</span></div>
+            <div class="flex justify-between"><span>Flood Fill</span><span class="kbd inline-block bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark rounded-sm px-1 py-px font-mono text-[10px] text-txt dark:text-txt-dark">F</span></div>
+            <div class="flex justify-between"><span>Garis DDA</span><span class="kbd inline-block bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark rounded-sm px-1 py-px font-mono text-[10px] text-txt dark:text-txt-dark">L</span></div>
+            <div class="flex justify-between"><span>Lingkaran</span><span class="kbd inline-block bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark rounded-sm px-1 py-px font-mono text-[10px] text-txt dark:text-txt-dark">C</span></div>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ─── CANVAS ─── -->
+    <main class="flex-1 flex flex-col overflow-hidden relative">
+      <div class="flex-1 overflow-auto relative bg-canvasbg dark:bg-canvasbg-dark p-2.5 custom-scroll">
+        <canvas id="canvas" width="1400" height="900" class="block cursor-crosshair w-full max-w-[1400px] h-auto mx-auto bg-white dark:bg-[#1a1a1a] border border-black dark:border-[#444]"></canvas>
+
+        <div class="absolute bottom-1.5 right-2 flex items-center gap-1.5 bg-white dark:bg-[#383838] border border-borderc dark:border-borderc-dark rounded py-[3px] px-2 shadow-sm z-10">
+          <label class="text-[9px] font-mono text-txt-3 dark:text-txt-dark-3">Zoom</label>
+          <button class="w-4 h-4 bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark text-txt-2 dark:text-txt-dark-2 rounded-sm cursor-pointer text-[11px] flex items-center justify-center shrink-0 hover:bg-surface-3 dark:hover:bg-surface-dark-3" id="zoom-out-btn" title="Zoom Out">−</button>
+          <input type="range" id="zoom" min="20" max="300" value="100" class="w-[60px]" />
+          <button class="w-4 h-4 bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark text-txt-2 dark:text-txt-dark-2 rounded-sm cursor-pointer text-[11px] flex items-center justify-center shrink-0 hover:bg-surface-3 dark:hover:bg-surface-dark-3" id="zoom-in-btn" title="Zoom In">+</button>
+          <span class="text-[10px] font-mono text-txt-2 dark:text-txt-dark-2 min-w-[30px] text-right" id="zoom-val">100%</span>
+        </div>
+      </div>
+
+      <div class="h-6 bg-white dark:bg-[#383838] border-t border-borderc dark:border-borderc-dark flex items-center px-2 gap-1.5 shrink-0">
+        <span class="w-1.5 h-1.5 rounded-full bg-green dark:bg-green-dark shrink-0" id="status-dot"></span>
+        <span class="text-[11px] font-mono text-txt-3 dark:text-txt-dark-3 flex-1 overflow-hidden text-overflow-ellipsis whitespace-nowrap" id="status-msg">Siap — pilih primitif dan klik canvas untuk menggambar.</span>
+      </div>
+    </main>
+
+  </div>
+</div>
+
+<!-- ═══ INFO PANEL (slide-in) ═══ -->
+<div class="info-panel-overlay fixed inset-0 bg-black/30 z-[200]" id="info-overlay"></div>
+<aside class="info-panel fixed top-0 right-0 w-[min(360px,100vw)] h-screen bg-white dark:bg-[#383838] border-l border-borderc dark:border-borderc-dark flex flex-col z-[201] overflow-y-auto" id="info-panel">
+  <div class="flex items-center justify-between p-2.5 px-3.5 border-b border-borderc dark:border-borderc-dark shrink-0 sticky top-0 bg-white dark:bg-[#383838] z-10">
+    <div>
+      <div class="text-[13px] font-semibold text-txt dark:text-txt-dark">GrafKom 2D — Dokumentasi</div>
+      <div class="text-[10px] text-txt-3 dark:text-txt-dark-3 font-mono mt-px">Grafika Komputer · Kelompok 1</div>
+    </div>
+    <button class="w-6 h-6 bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark text-txt-2 dark:text-txt-dark-2 rounded-sm cursor-pointer text-sm flex items-center justify-center hover:bg-red-dim dark:hover:bg-red-dark-dim hover:text-red dark:hover:text-red-dark" id="close-info-btn">✕</button>
+  </div>
+
+  <div class="p-3.5 flex-1">
+    <div class="mb-4">
+      <div class="text-[11px] font-semibold text-accent dark:text-accent-dark border-b border-borderc dark:border-borderc-dark pb-1 mb-2 font-mono">01 — Tentang Proyek</div>
+      <p class="text-[11px] text-txt-2 dark:text-txt-dark-2 leading-relaxed mb-1.5">Proyek akhir mata kuliah Grafika Komputer yang mengimplementasikan berbagai algoritma fundamental grafika 2D secara interaktif berbasis web menggunakan HTML5 Canvas API dan JavaScript murni.</p>
+      <p class="text-[11px] text-txt-2 dark:text-txt-dark-2 leading-relaxed mb-1.5">Rendering dilakukan secara <strong>pixel-by-pixel</strong> tanpa memanfaatkan fungsi drawing bawaan Canvas (kecuali <code class="bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark rounded-sm px-1 py-px font-mono text-[10px] text-accent dark:text-accent-dark">fillRect</code> untuk plot piksel).</p>
+    </div>
+
+    <div class="mb-4">
+      <div class="text-[11px] font-semibold text-accent dark:text-accent-dark border-b border-borderc dark:border-borderc-dark pb-1 mb-2 font-mono">02 — Algoritma</div>
+      <table class="w-full border-collapse text-[10px] mt-1">
+        <thead><tr><th class="text-left p-1 px-1.5 bg-surface-2 dark:bg-surface-dark-2 text-txt-3 dark:text-txt-dark-3 font-semibold text-[9px] border border-borderc dark:border-borderc-dark">Materi</th><th class="text-left p-1 px-1.5 bg-surface-2 dark:bg-surface-dark-2 text-txt-3 dark:text-txt-dark-3 font-semibold text-[9px] border border-borderc dark:border-borderc-dark">Algoritma</th><th class="text-left p-1 px-1.5 bg-surface-2 dark:bg-surface-dark-2 text-txt-3 dark:text-txt-dark-3 font-semibold text-[9px] border border-borderc dark:border-borderc-dark">Deskripsi</th></tr></thead>
+        <tbody>
+          <tr><td class="p-1 px-1.5 text-txt-2 dark:text-txt-dark-2 border border-borderc dark:border-borderc-dark">03</td><td class="p-1 px-1.5 text-txt-2 dark:text-txt-dark-2 border border-borderc dark:border-borderc-dark"><span class="inline-block bg-accent-bg dark:bg-accent-dark-bg border border-accent-dim dark:border-accent-dark-dim text-accent dark:text-accent-dark rounded-sm px-1 py-px text-[9px] font-mono">DDA Line</span></td><td class="p-1 px-1.5 text-txt-2 dark:text-txt-dark-2 border border-borderc dark:border-borderc-dark">Digital Differential Analyzer</td></tr>
+          <tr><td class="p-1 px-1.5 text-txt-2 dark:text-txt-dark-2 border border-borderc dark:border-borderc-dark">03</td><td class="p-1 px-1.5 text-txt-2 dark:text-txt-dark-2 border border-borderc dark:border-borderc-dark"><span class="inline-block bg-accent-bg dark:bg-accent-dark-bg border border-accent-dim dark:border-accent-dark-dim text-accent dark:text-accent-dark rounded-sm px-1 py-px text-[9px] font-mono">Bresenham</span></td><td class="p-1 px-1.5 text-txt-2 dark:text-txt-dark-2 border border-borderc dark:border-borderc-dark">Integer-only line algorithm</td></tr>
+          <tr><td class="p-1 px-1.5 text-txt-2 dark:text-txt-dark-2 border border-borderc dark:border-borderc-dark">04</td><td class="p-1 px-1.5 text-txt-2 dark:text-txt-dark-2 border border-borderc dark:border-borderc-dark"><span class="inline-block bg-accent-bg dark:bg-accent-dark-bg border border-accent-dim dark:border-accent-dark-dim text-accent dark:text-accent-dark rounded-sm px-1 py-px text-[9px] font-mono">Midpoint Circle</span></td><td class="p-1 px-1.5 text-txt-2 dark:text-txt-dark-2 border border-borderc dark:border-borderc-dark">8-fold symmetry</td></tr>
+          <tr><td class="p-1 px-1.5 text-txt-2 dark:text-txt-dark-2 border border-borderc dark:border-borderc-dark">04</td><td class="p-1 px-1.5 text-txt-2 dark:text-txt-dark-2 border border-borderc dark:border-borderc-dark"><span class="inline-block bg-accent-bg dark:bg-accent-dark-bg border border-accent-dim dark:border-accent-dark-dim text-accent dark:text-accent-dark rounded-sm px-1 py-px text-[9px] font-mono">Midpoint Ellipse</span></td><td class="p-1 px-1.5 text-txt-2 dark:text-txt-dark-2 border border-borderc dark:border-borderc-dark">4-fold symmetry</td></tr>
+          <tr><td class="p-1 px-1.5 text-txt-2 dark:text-txt-dark-2 border border-borderc dark:border-borderc-dark">05</td><td class="p-1 px-1.5 text-txt-2 dark:text-txt-dark-2 border border-borderc dark:border-borderc-dark"><span class="inline-block bg-accent-bg dark:bg-accent-dark-bg border border-accent-dim dark:border-accent-dark-dim text-accent dark:text-accent-dark rounded-sm px-1 py-px text-[9px] font-mono">Flood Fill</span></td><td class="p-1 px-1.5 text-txt-2 dark:text-txt-dark-2 border border-borderc dark:border-borderc-dark">Queue-based scanline</td></tr>
+          <tr><td class="p-1 px-1.5 text-txt-2 dark:text-txt-dark-2 border border-borderc dark:border-borderc-dark">05</td><td class="p-1 px-1.5 text-txt-2 dark:text-txt-dark-2 border border-borderc dark:border-borderc-dark"><span class="inline-block bg-accent-bg dark:bg-accent-dark-bg border border-accent-dim dark:border-accent-dark-dim text-accent dark:text-accent-dark rounded-sm px-1 py-px text-[9px] font-mono">Scan-Line Fill</span></td><td class="p-1 px-1.5 text-txt-2 dark:text-txt-dark-2 border border-borderc dark:border-borderc-dark">Active Edge List (AEL)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mb-4">
+      <div class="text-[11px] font-semibold text-accent dark:text-accent-dark border-b border-borderc dark:border-borderc-dark pb-1 mb-2 font-mono">03 — Tipe Garis</div>
+      <ul class="list-none flex flex-col gap-1 feature-list">
+        <li class="flex items-start gap-1.5 text-[11px] text-txt-2 dark:text-txt-dark-2 leading-relaxed"><strong>Solid</strong> — semua piksel aktif</li>
+        <li class="flex items-start gap-1.5 text-[11px] text-txt-2 dark:text-txt-dark-2 leading-relaxed"><strong>Dashed</strong> — pola 6 ON, 4 OFF</li>
+        <li class="flex items-start gap-1.5 text-[11px] text-txt-2 dark:text-txt-dark-2 leading-relaxed"><strong>Dotted</strong> — pola 1 ON, 3 OFF</li>
+        <li class="flex items-start gap-1.5 text-[11px] text-txt-2 dark:text-txt-dark-2 leading-relaxed"><strong>Dash-Dot</strong> — pola 6 ON, 3 OFF, 1 ON, 3 OFF</li>
+      </ul>
+    </div>
+
+    <div class="mb-4">
+      <div class="text-[11px] font-semibold text-accent dark:text-accent-dark border-b border-borderc dark:border-borderc-dark pb-1 mb-2 font-mono">04 — Transformasi 2D</div>
+      <p class="text-[11px] text-txt-2 dark:text-txt-dark-2 leading-relaxed mb-1.5">Koordinat homogen 3×3: <code class="bg-surface-2 dark:bg-surface-dark-2 border border-borderc dark:border-borderc-dark rounded-sm px-1 py-px font-mono text-[10px] text-accent dark:text-accent-dark">M = T · R · S · Sh</code></p>
+      <table class="w-full border-collapse text-[10px] mt-1">
+        <thead><tr><th class="text-left p-1 px-1.5 bg-surface-2 dark:bg-surface-dark-2 text-txt-3 dark:text-txt-dark-3 font-semibold text-[9px] border border-borderc dark:border-borderc-dark">Transformasi</th><th class="text-left p-1 px-1.5 bg-surface-2 dark:bg-surface-dark-2 text-txt-3 dark:text-txt-dark-3 font-semibold text-[9px] border border-borderc dark:border-borderc-dark">Parameter</th></tr></thead>
+        <tbody>
+          <tr><td class="p-1 px-1.5 text-txt-2 dark:text-txt-dark-2 border border-borderc dark:border-borderc-dark">Translasi (T)</td><td class="p-1 px-1.5 text-txt-2 dark:text-txt-dark-2 border border-borderc dark:border-borderc-dark">tx, ty dalam piksel</td></tr>
+          <tr><td class="p-1 px-1.5 text-txt-2 dark:text-txt-dark-2 border border-borderc dark:border-borderc-dark">Rotasi (R)</td><td class="p-1 px-1.5 text-txt-2 dark:text-txt-dark-2 border border-borderc dark:border-borderc-dark">sudut derajat, pusat objek</td></tr>
+          <tr><td class="p-1 px-1.5 text-txt-2 dark:text-txt-dark-2 border border-borderc dark:border-borderc-dark">Skala (S)</td><td class="p-1 px-1.5 text-txt-2 dark:text-txt-dark-2 border border-borderc dark:border-borderc-dark">0.1× – 4.0×</td></tr>
+          <tr><td class="p-1 px-1.5 text-txt-2 dark:text-txt-dark-2 border border-borderc dark:border-borderc-dark">Shear (Sh)</td><td class="p-1 px-1.5 text-txt-2 dark:text-txt-dark-2 border border-borderc dark:border-borderc-dark">−200 s/d +200</td></tr>
+          <tr><td class="p-1 px-1.5 text-txt-2 dark:text-txt-dark-2 border border-borderc dark:border-borderc-dark">Refleksi</td><td class="p-1 px-1.5 text-txt-2 dark:text-txt-dark-2 border border-borderc dark:border-borderc-dark">X, Y, Origin, y=x</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mb-4">
+      <div class="text-[11px] font-semibold text-accent dark:text-accent-dark border-b border-borderc dark:border-borderc-dark pb-1 mb-2 font-mono">05 — Cara Penggunaan</div>
+      <ul class="list-none flex flex-col gap-1 feature-list">
+        <li class="flex items-start gap-1.5 text-[11px] text-txt-2 dark:text-txt-dark-2 leading-relaxed">Pilih alat dari toolbar, lalu klik/drag di canvas.</li>
+        <li class="flex items-start gap-1.5 text-[11px] text-txt-2 dark:text-txt-dark-2 leading-relaxed"><strong>Poligon</strong>: atur jumlah sisi, lalu klik titik-titik. Otomatis selesai.</li>
+        <li class="flex items-start gap-1.5 text-[11px] text-txt-2 dark:text-txt-dark-2 leading-relaxed"><strong>Flood Fill</strong>: klik area terbuka di canvas.</li>
+        <li class="flex items-start gap-1.5 text-[11px] text-txt-2 dark:text-txt-dark-2 leading-relaxed"><strong>Pensil</strong>: tahan dan gerak mouse.</li>
+        <li class="flex items-start gap-1.5 text-[11px] text-txt-2 dark:text-txt-dark-2 leading-relaxed"><strong>Penghapus</strong>: tahan dan gerak mouse.</li>
+        <li class="flex items-start gap-1.5 text-[11px] text-txt-2 dark:text-txt-dark-2 leading-relaxed">Shortcut: <strong>V</strong>=Cursor, <strong>P</strong>=Pensil, <strong>E</strong>=Hapus, <strong>F</strong>=Fill, <strong>L</strong>=Garis, <strong>C</strong>=Lingkaran</li>
+      </ul>
+    </div>
+
+    <div class="mb-4">
+      <div class="text-[11px] font-semibold text-accent dark:text-accent-dark border-b border-borderc dark:border-borderc-dark pb-1 mb-2 font-mono">06 — Kelompok 1</div>
+      <ul class="list-none flex flex-col gap-1 feature-list">
+        <li class="flex items-start gap-1.5 text-[11px] text-txt-2 dark:text-txt-dark-2 leading-relaxed">Anak Agung Ngurah Sadewa Tedja JayaNegara</li>
+        <li class="flex items-start gap-1.5 text-[11px] text-txt-2 dark:text-txt-dark-2 leading-relaxed">Ardhika Rizki Akbar Pratama</li>
+        <li class="flex items-start gap-1.5 text-[11px] text-txt-2 dark:text-txt-dark-2 leading-relaxed">Prayatna Ardi Wibisono</li>
+      </ul>
+    </div>
+  </div>
+</aside>
+
+<script src="app.js"></script>
+</body>
+</html>
