@@ -755,13 +755,32 @@ function sameColorAt(data, index, color) {
 function drawSelectionIndicator(shape) {
   const tx = shape.cx + shape.transform.tx;
   const ty = shape.cy + shape.transform.ty;
+  const r = getApproxRadius(shape) + 10;
   ctx.save();
-  ctx.strokeStyle = "var(--amber, #f5a623)";
-  ctx.lineWidth = 0.8; ctx.setLineDash([4,3]);
-  ctx.beginPath(); ctx.arc(tx, ty, getApproxRadius(shape)+10, 0, Math.PI*2); ctx.stroke();
-  ctx.strokeStyle = "rgba(245,166,35,0.4)"; ctx.lineWidth=0.5; ctx.setLineDash([]);
-  ctx.beginPath(); ctx.moveTo(tx-5,ty); ctx.lineTo(tx+5,ty); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(tx,ty-5); ctx.lineTo(tx,ty+5); ctx.stroke();
+  ctx.strokeStyle = "var(--primary, #1a73e8)";
+  ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+  ctx.strokeRect(tx - r, ty - r, r*2, r*2);
+  
+  ctx.strokeStyle = "rgba(26, 115, 232, 0.5)"; ctx.lineWidth = 1; ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(tx-4,ty); ctx.lineTo(tx+4,ty); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(tx,ty-4); ctx.lineTo(tx,ty+4); ctx.stroke();
+  
+  // draw small handles
+  ctx.fillStyle = "#fff";
+  ctx.strokeStyle = "#1a73e8";
+  ctx.setLineDash([]);
+  const handleSize = 6;
+  const hs = handleSize / 2;
+  const handles = [
+    {x: tx - r, y: ty - r}, {x: tx + r, y: ty - r},
+    {x: tx - r, y: ty + r}, {x: tx + r, y: ty + r},
+    {x: tx, y: ty - r}, {x: tx, y: ty + r},
+    {x: tx - r, y: ty}, {x: tx + r, y: ty}
+  ];
+  for (const h of handles) {
+    ctx.fillRect(h.x - hs, h.y - hs, handleSize, handleSize);
+    ctx.strokeRect(h.x - hs, h.y - hs, handleSize, handleSize);
+  }
   ctx.restore();
 }
 
@@ -1477,3 +1496,68 @@ function init() {
 }
 
 init();
+
+// ── PHOTOSHOP SHORTCUTS (ZOOM & PAN) ──────────────────────────
+let isSpaceDown = false;
+let isPanning = false;
+let panStartX = 0, panStartY = 0;
+let scrollStartX = 0, scrollStartY = 0;
+
+window.addEventListener("keydown", e => {
+  if (e.code === "Space") {
+    if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.tagName === "SELECT") return;
+    e.preventDefault(); // Always prevent default to stop scrolling
+    if (!isSpaceDown) {
+      isSpaceDown = true;
+      canvas.style.cursor = "grab";
+    }
+  }
+});
+
+window.addEventListener("keyup", e => {
+  if (e.code === "Space") {
+    isSpaceDown = false;
+    isPanning = false;
+    canvas.style.cursor = "";
+    setTool(activeTool); // restore cursor
+  }
+});
+
+let canvasPanX = 0, canvasPanY = 0;
+
+canvasWrap.addEventListener("mousedown", e => {
+  if (isSpaceDown) {
+    isPanning = true;
+    panStartX = e.clientX;
+    panStartY = e.clientY;
+    scrollStartX = canvasPanX;
+    scrollStartY = canvasPanY;
+    canvas.style.cursor = "grabbing";
+    e.preventDefault();
+    e.stopPropagation();
+  }
+}, { capture: true });
+
+window.addEventListener("mousemove", e => {
+  if (isPanning) {
+    canvasPanX = scrollStartX + (e.clientX - panStartX);
+    canvasPanY = scrollStartY + (e.clientY - panStartY);
+    canvas.style.transform = `translate(${canvasPanX}px, ${canvasPanY}px)`;
+  }
+});
+
+window.addEventListener("mouseup", e => {
+  if (isPanning) {
+    isPanning = false;
+    canvas.style.cursor = isSpaceDown ? "grab" : "";
+  }
+});
+
+canvasWrap.addEventListener("wheel", e => {
+  if (e.altKey) {
+    e.preventDefault();
+    const zoomDir = e.deltaY > 0 ? -10 : 10;
+    zoomSlider.value = Math.max(20, Math.min(300, Number(zoomSlider.value) + zoomDir));
+    zoomSlider.dispatchEvent(new Event("input"));
+  }
+}, { passive: false });
